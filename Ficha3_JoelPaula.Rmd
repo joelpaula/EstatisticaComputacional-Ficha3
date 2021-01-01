@@ -1,5 +1,6 @@
 ---
-title: "Ficha nº 3 - Joel Paula (93392)"
+title: "Ficha nº 3"
+author: Joel Paula | aluno 93392
 output:
   html_document: 
     toc: yes
