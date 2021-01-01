@@ -1,0 +1,105 @@
+---
+title: "Ficha nº 3 - Joel Paula (93392)"
+output:
+  html_document: 
+    toc: yes
+    theme: spacelab
+    highlight: tango
+editor_options: 
+  chunk_output_type: console
+---
+
+OBJETIVO: Verificar experimentalmente qual o Estimador de Máxima Verosimilhança para o parâmetro $\lambda$ de uma Poisson.
+
+No ficheiro .cvs “`amostrasPoisson2`” tem informação sobre três amostras recolhidas de uma população Poisson, da qual desconhece o parâmetro caracterizador. A amostra em am1 é de dimensão 10, am2 e am3 têm, respetivamente, 20 e 30 observações. 
+
+```{r warning=TRUE, include=FALSE}
+library("prob")
+library("knitr")
+```
+
+# 1.	Ler o ficheiro para um dataframe e retirar vetores a1, a2 e a3 correspondentes a cada uma das amostras. 
+Elimine nestes vetores os valores omissos (NA). 
+
+```{r}
+amostras <- read.csv("amostrasPoisson2")
+a1 <- na.omit(amostras$am_10)
+a2 <- na.omit(amostras$am_20)
+a3 <- na.omit(amostras$am_30)
+
+kable(amostras, format = "pipe")
+```
+
+# 2.	Para cada amostra, calcular as medidas básicas caracterizadoras 
+(média, desvio-padrão, variância, mínimo e máximo)
+
+| Amostra | média| mínimo | máximo | desvio padrão | Variância |
+|---------+------+--------+--------+---------------+-----------|
+|    a1   | `r mean(a1)` | `r min(a1)` | `r max(a1)` | `r sd(a1)` | `r var(a1)`|
+|    a2   | `r mean(a2)` | `r min(a2)` | `r max(a2)` | `r sd(a2)` | `r var(a2)`|
+|    a3   | `r mean(a3)` | `r min(a3)` | `r max(a3)` | `r sd(a3)` | `r var(a3)`|
+
+# 3.	Apresente gráficos de cada uma das respetivas funções de probabilidade empíricas
+```{r}
+# a1
+hist(a1, freq = FALSE, sub=paste("média", mean(a1), "; mín", min(a1), "; máx", max(a1), "; dp",sd(a1), "; var", var(a1)))
+# a2
+hist(a2, freq = FALSE, sub=paste("média", mean(a2), "; mín", min(a2), "; máx", max(a2), "; dp",sd(a2), "; var", var(a2)))
+# a3
+hist(a3, freq = FALSE, sub=paste("média", mean(a3), "; mín", min(a3), "; máx", max(a3), "; dp",sd(a3), "; var", var(a3)))
+
+```
+
+# 4. Apresente a dedução – analítica – da função de verosimilhança 
+para o parâmetro $λ$ de uma Poisson, com base numa amostra genérica de tamanho $n$.
+
+Genéricamente, a função de verosimilhança é:
+$$\mathcal{L}(\theta) = \prod_{i=1}^n f(x_i \mid \theta) $$
+A função de distribuição de Poisson é:
+$$ \mathcal{f}(x) = \frac{e^{-\lambda} \lambda^{ x}}{x!} $$
+Sendo que $E[X] = \lambda$ e $Var[X] = \lambda$.
+
+Então a nossa incógnita é $\lambda$ e deduzindo a função de verosimilhança é:
+$$ \mathcal{L}(\lambda) = \frac{e^{-n\lambda} \lambda^{\sum_{i=1}^{n} x_i}}{\displaystyle\prod_{i=1}^{n} x_i!} $$
+
+# 5.	O que se pretende é maximizar a função definida
+pelo que se utilizará a função optimize do R (veja help(optimize) no R). 
+Obtenha então o ótimo para cada uma das três amostras disponíveis. 
+```{r}
+# a função a otimizar
+ff <- function(lambda, x){
+  (exp(-length(x)*lambda)*lambda^(sum(x)))/prod(factorial(x))
+}
+optimize(ff, c(0,10), maximum = TRUE, x=a1)
+optimize(ff, c(0,10), maximum = TRUE, x=a2)
+optimize(ff, c(0,10), maximum = TRUE, x=a3)
+
+```
+
+
+# 6.	Compare os resultados obtidos nas otimizações acima com as medidas básicas obtidas em 3. 
+O que observa/conclui?
+
+verifico que o máximo $\lambda$ encontrado corresponde sempre ao valor da média da amostra, pelo que parece ser um bom estimador.
+
+# 7.	Usando as técnicas analíticas tradicionais de procura de extremos de uma função real de variável real, determine o estimador de máxima verosimilhança para o parâmetro $\lambda$ de uma Poisson. 
+
+Para nos ajudar na derivação que é necessária para os cálculos que se seguem, vamos usar a função logaritmo da nossa função de verosimilhança, que tem um comportamento análogo ao da função:
+$$\ln (\mathcal{L}(\lambda)) = \ln(e^{-n\lambda} \lambda^{\sum_{i=1}^{n} x_i}) - \ln(\displaystyle\prod_{i=1}^{n} x_i!) =$$
+$$ = \ln(e^{-n\lambda}) + \ln( \lambda^{\sum_{i=1}^{n} x_i}) - \ln(\displaystyle\prod_{i=1}^{n} x_i!) =$$
+$$ = {-n\lambda} \times \ln(e) + {\sum_{i=1}^{n} x_i} \times \ln( \lambda) - \ln(\displaystyle\prod_{i=1}^{n} x_i!) =$$
+$$ = {-n\lambda} + {\sum_{i=1}^{n} x_i} \times \ln( \lambda) - \ln(\displaystyle\prod_{i=1}^{n} x_i!)$$
+
+derivando:
+$$ \frac{d \ln(\mathcal{L}(\lambda))}{d\lambda} = -n + \frac{1}{\lambda}{\sum_{i=1}^{n} x_i}$$
+
+Igualando o resultado a zero:
+$$ \frac{d \ln(\mathcal{L}(\lambda))}{d\lambda} = 0 \Leftrightarrow -n + \frac{1}{\lambda}{\sum_{i=1}^{n} x_i} = 0 \Leftrightarrow$$
+$$ \Leftrightarrow \lambda = \frac{{\sum_{i=1}^{n} x_i}}{n} = \bar{X}$$
+
+Portanto, o estimador de $\lambda$ é:
+$$ \hat\lambda = \bar{X}$$
+
+Vamos confirmar se o estimador é realmente um ponto máximo, fazendo a segunda derivada da função:
+$$ \frac{d^2 \ln(\mathcal{L}(\lambda))}{d\lambda^2} = -\frac{1}{\lambda^2}{\sum_{i=1}^{n} x_i} <0$$
+Portanto o nosso estimador é o ponto máximo da função de verosimilhança, então temos que $\hat\lambda_{MV}=\frac{{\sum_{i=1}^{n} x_i}}{n} = \bar{X}$
